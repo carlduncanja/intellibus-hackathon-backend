@@ -2,7 +2,8 @@ import json
 
 from constants import ACTION_SEND_MESSAGE, ACTION_GET_USER_CHATS, ACTION_CREATE_CHAT, ACTION_JOIN_CHAT, \
     ACTION_LEAVE_CHAT
-from utils import sendMessage, getUserChats, createChat, joinChat, reply, leaveChat
+from chat_utils import sendMessage, getUserChats, createChat, joinChat, reply, leaveChat
+from agent_utils import sample_ai_output
 
 
 def lambda_handler(event, context):
@@ -47,5 +48,7 @@ def lambda_handler(event, context):
 
     else:
         response_data = {'error': 'Unknown action'}
+
+    reply(connection_id, sample_ai_output())
 
     return reply(connection_id, response_data)

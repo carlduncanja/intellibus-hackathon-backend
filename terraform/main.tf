@@ -188,6 +188,7 @@ resource "aws_lambda_function" "default_lambda" {
   environment {
     variables = {
       WEBSOCKET_URL         = "https://${aws_apigatewayv2_api.websocket_api.id}.execute-api.${var.region}.amazonaws.com/${aws_apigatewayv2_stage.websocket_stage.name}"
+      OPENAI_API_KEY        = var.openai_api_key
     }
   }
 }

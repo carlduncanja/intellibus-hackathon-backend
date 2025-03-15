@@ -9,7 +9,8 @@ RUN pip install -r requirements.txt
 # Copy function code
 COPY index.py ${LAMBDA_TASK_ROOT}
 COPY models.py ${LAMBDA_TASK_ROOT}
-COPY utils.py ${LAMBDA_TASK_ROOT}
+COPY chat_utils.py ${LAMBDA_TASK_ROOT}
+COPY agent_utils.py ${LAMBDA_TASK_ROOT}
 COPY constants.py ${LAMBDA_TASK_ROOT}
 
 CMD ["index.lambda_handler"]

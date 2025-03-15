@@ -6,5 +6,9 @@ variable "tags" {
 
 variable "region" {
   description = "The AWS region to deploy into"
-  default     = "us-west-1"
+  default     = "us-west-2"
+}
+
+variable "openai_api_key" {
+  description = "OpenAI API key"
 }
