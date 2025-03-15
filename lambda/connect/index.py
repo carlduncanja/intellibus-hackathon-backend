@@ -1,4 +1,3 @@
-import json
 import boto3
 
 # Initialize DynamoDB client
@@ -13,7 +12,7 @@ def lambda_handler(event, context):
     # Store the connection ID in DynamoDB
     connections_table.put_item(
         Item={
-            'id': connection_id
+            'connectionId': connection_id
         }
     )
 
