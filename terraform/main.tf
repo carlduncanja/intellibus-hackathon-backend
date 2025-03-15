@@ -131,6 +131,67 @@ resource "aws_dynamodb_table" "promotions" {
   tags = var.tags
 }
 
+############################################
+# ECR Repositories for Lambda Function Code
+############################################
+
+
+resource "aws_ecr_repository" "connect_lambda_repo" {
+  name = "connect-lambda-repo"
+  tags = var.tags
+}
+
+resource "aws_ecr_repository" "disconnect_lambda_repo" {
+  name = "disconnect-lambda-repo"
+  tags = var.tags
+}
+
+resource "aws_ecr_repository" "default_lambda_repo" {
+  name = "default-lambda-repo"
+  tags = var.tags
+}
+
+
+##########################################
+# Lambda Functions (Code from S3 bucket) #
+##########################################
+
+resource "aws_lambda_function" "connect_lambda" {
+  function_name = "ConnectLambda"
+  package_type  = "Image"
+  image_uri     = "${aws_ecr_repository.connect_lambda_repo.repository_url}:latest"
+  role          = aws_iam_role.lambda_execution_role.arn
+  tags          = var.tags
+
+  environment {
+    variables = {
+      WEBSOCKET_URL         = "https://${aws_apigatewayv2_api.websocket_api.id}.execute-api.${var.region}.amazonaws.com/${aws_apigatewayv2_stage.websocket_stage.name}"
+    }
+  }
+}
+
+resource "aws_lambda_function" "disconnect_lambda" {
+  function_name = "DisconnectLambda"
+  package_type  = "Image"
+  image_uri     = "${aws_ecr_repository.disconnect_lambda_repo.repository_url}:latest"
+  role          = aws_iam_role.lambda_execution_role.arn
+  tags          = var.tags
+}
+
+resource "aws_lambda_function" "default_lambda" {
+  function_name = "DefaultLambda"
+  package_type  = "Image"
+  image_uri     = "${aws_ecr_repository.default_lambda_repo.repository_url}:latest"
+  role          = aws_iam_role.lambda_execution_role.arn
+  tags          = var.tags
+
+  environment {
+    variables = {
+      WEBSOCKET_URL         = "https://${aws_apigatewayv2_api.websocket_api.id}.execute-api.${var.region}.amazonaws.com/${aws_apigatewayv2_stage.websocket_stage.name}"
+    }
+  }
+}
+
 #######################################
 # API Gateway V2 WebSocket API Config #
 #######################################
@@ -142,6 +203,78 @@ resource "aws_apigatewayv2_api" "websocket_api" {
   tags                       = var.tags
 }
 
+resource "aws_apigatewayv2_integration" "connect_integration" {
+  api_id                 = aws_apigatewayv2_api.websocket_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.connect_lambda.arn}/invocations"
+  payload_format_version = "1.0"
+}
+
+resource "aws_apigatewayv2_integration" "disconnect_integration" {
+  api_id                 = aws_apigatewayv2_api.websocket_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.disconnect_lambda.arn}/invocations"
+  payload_format_version = "1.0"
+}
+
+resource "aws_apigatewayv2_integration" "default_integration" {
+  api_id                 = aws_apigatewayv2_api.websocket_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.default_lambda.arn}/invocations"
+  payload_format_version = "1.0"
+}
+
+resource "aws_apigatewayv2_route" "connect_route" {
+  api_id    = aws_apigatewayv2_api.websocket_api.id
+  route_key = "$connect"
+  target    = "integrations/${aws_apigatewayv2_integration.connect_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "disconnect_route" {
+  api_id    = aws_apigatewayv2_api.websocket_api.id
+  route_key = "$disconnect"
+  target    = "integrations/${aws_apigatewayv2_integration.disconnect_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "default_route" {
+  api_id    = aws_apigatewayv2_api.websocket_api.id
+  route_key = "$default"
+  target    = "integrations/${aws_apigatewayv2_integration.default_integration.id}"
+}
+
+resource "aws_apigatewayv2_deployment" "websocket_deployment" {
+  api_id = aws_apigatewayv2_api.websocket_api.id
+
+  triggers = {
+    redeployment = sha1(join(",", [
+      aws_apigatewayv2_route.connect_route.id,
+      aws_apigatewayv2_route.disconnect_route.id,
+      aws_apigatewayv2_route.default_route.id
+    ]))
+  }
+
+  depends_on = [
+    aws_apigatewayv2_route.connect_route,
+    aws_apigatewayv2_route.disconnect_route,
+    aws_apigatewayv2_route.default_route
+  ]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_apigatewayv2_stage" "websocket_stage" {
+  api_id      = aws_apigatewayv2_api.websocket_api.id
+  name        = "development"
+  auto_deploy = true
+
+  lifecycle {
+    ignore_changes = [deployment_id]
+  }
+
+  tags = var.tags
+}
 
 ##########################################
 # IAM Role and Policy for Lambda Execution
@@ -222,3 +355,4 @@ resource "aws_iam_role_policy" "lambda_policy" {
     ]
   })
 }
+
