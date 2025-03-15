@@ -6,5 +6,5 @@ variable "tags" {
 
 variable "region" {
   description = "The AWS region to deploy into"
-  default     = "us-east-2"  # Adjust as needed
+  default     = "us-west-1"
 }
