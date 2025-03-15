@@ -1,0 +1,99 @@
+@startuml
+skinparam linetype ortho
+
+' Define the User entity
+entity "User" as u {
+  * Id : int <<externally handled>>
+  --
+  Tokens : int
+}
+
+' Define the UserChats junction entity for many-to-many between User and Chats
+entity "UserChats" as uc {
+  * UserId : int
+  * ChatId : int
+}
+
+' Define the Chats entity
+entity "Chats" as c {
+  * Id : int
+  --
+  Name : string
+  AdminId : int
+  AdminName : string
+  ShareId : string
+  DateCreated : datetime
+}
+
+' Define the Messages entity (associated with Chats)
+entity "Messages" as m {
+  * Id : int
+  --
+  UserId : int
+  Text : string
+  IncludedInModel : boolean
+  AssetKey : string
+  AssetType : string
+  ReplyId : int
+  DateCreated : datetime
+}
+
+' Define the Itineraries entity (linked to a Chat)
+entity "Itineraries" as it {
+  * Id : int
+  --
+  AssetKey : string
+  ChatId : int
+  Name : string
+}
+
+' Define the Schedule entity (associated with a User)
+entity "Schedule" as s {
+  * Id : int
+  --
+  Name : string
+  Description : string
+  Link : string
+  UserId : int
+  Date : datetime
+}
+
+' Define the SocketConnections entity (linked to a Chat)
+entity "SocketConnections" as sc {
+  * Id : int
+  --
+  ConnectionId : string
+  ChatId : int
+}
+
+' Define the Promotions entity
+entity "Promotions" as p {
+  * Id : int
+  --
+  Name : string
+  Description : string
+  Latitude : float
+  Longitude : float
+  PromotionRadius : float
+}
+
+' Relationships
+
+' User to UserChats: One user can participate in many chats
+u ||--o{ uc : "participates in"
+
+' Chats to UserChats: One chat can have many users
+c ||--o{ uc : "has participants"
+
+' Chats to Messages: One chat has many messages
+c ||--o{ m : "has messages"
+
+' Chats to Itineraries: One chat has exactly one itinerary
+c ||--|| it : "has one itinerary"
+
+' Chats to SocketConnections: One chat can have many socket connections
+c ||--o{ sc : "has connections"
+
+' User to Schedule: One user can have many schedules
+u ||--o{ s : "has schedules"
+@enduml
