@@ -1,0 +1,5 @@
+ACTION_SEND_MESSAGE = "sendMessage"
+ACTION_GET_USER_CHATS = "getUserChats"
+ACTION_CREATE_CHAT = "createChat"
+ACTION_JOIN_CHAT = "joinChat"
+ACTION_LEAVE_CHAT = "leaveChat"
