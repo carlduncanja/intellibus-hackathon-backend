@@ -1,54 +1,26 @@
 import json
+import boto3
 
-from constants import ACTION_SEND_MESSAGE, ACTION_GET_USER_CHATS, ACTION_CREATE_CHAT, ACTION_JOIN_CHAT, \
-    ACTION_LEAVE_CHAT
-from chat_utils import sendMessage, getUserChats, createChat, joinChat, reply, leaveChat
-from agent_utils import sample_ai_output
+apigatewaymanagementapi = boto3.client('apigatewaymanagementapi',
+                                       endpoint_url='https://ay4vs1shl6.execute-api.us-east-1.amazonaws.com/development')
 
 
 def lambda_handler(event, context):
     connection_id = event['requestContext']['connectionId']
+    message = json.loads(event['body']).get('message', '')
+    print(f"Message received: {message} from connection ID: {connection_id}")
 
+    # Optionally, you can broadcast the message to other connected clients or handle it in any way you want
     try:
-        body = json.loads(event['body'])
-    except json.JSONDecodeError:
-        return reply(connection_id, {'error': 'Invalid JSON'})
+        # Send a response message back to the client
+        apigatewaymanagementapi.post_to_connection(
+            ConnectionId=connection_id,
+            Data=json.dumps({'response': 'Message Received on the Server : ' + message})
+        )
+    except apigatewaymanagementapi.exceptions.GoneException:
+        print(f"Connection {connection_id} no longer exists")
 
-    print(f"Action received: {body.get('Action')} from connection ID: {connection_id}")
-
-    if 'Action' not in body:
-        return reply(connection_id, {'error': 'Missing Action'})
-
-    action = body['Action']
-
-    if action == ACTION_SEND_MESSAGE:
-        if 'Message' not in body:
-            return reply(connection_id, {'error': 'Missing Message'})
-        response_data = {'result': sendMessage(body['Message'])}
-
-    elif action == ACTION_GET_USER_CHATS:
-        if 'UserId' not in body:
-            return reply(connection_id, {'error': 'Missing UserId'})
-        response_data = getUserChats(body['UserId'])
-
-    elif action == ACTION_CREATE_CHAT:
-        if 'Chat' not in body:
-            return reply(connection_id, {'error': 'Missing Chat'})
-        response_data = {'result': createChat(body['Chat'])}
-
-    elif action == ACTION_JOIN_CHAT:
-        if 'ChatId' not in body or 'UserId' not in body:
-            return reply(connection_id, {'error': 'Missing ChatId or UserId'})
-        response_data = {'result': joinChat(body['ChatId'], body['UserId'])}
-
-    elif action == ACTION_LEAVE_CHAT:
-        if 'ChatId' not in body or 'UserId' not in body:
-            return reply(connection_id, {'error': 'Missing Chat or UserId'})
-        response_data = {'result': leaveChat(body['ChatId'], body['UserId'])}
-
-    else:
-        response_data = {'error': 'Unknown action'}
-
-    reply(connection_id, sample_ai_output())
-
-    return reply(connection_id, response_data)
+    return {
+        'statusCode': 200,
+        'body': 'Message processed'
+    }

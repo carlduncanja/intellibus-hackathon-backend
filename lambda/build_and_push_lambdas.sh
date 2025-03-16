@@ -39,12 +39,24 @@ docker tag default-lambda:latest "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/defa
 docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/default-lambda-repo:latest"
 echo "✅ Pushed Default Lambda"
 
+
+# ------------------------------
+# CreateVoice Lambda
+# ------------------------------
+echo "🚀 Building CreateVoice Lambda"
+docker build --platform=linux/amd64 -t default-lambda create_voice
+docker tag default-lambda:latest "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/create-voice-lambda-repo:latest"
+docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/create-voice-lambda-repo:latest"
+echo "✅ Pushed CreateVoice Lambda"
+
 echo "🎉 All Lambda images built and pushed successfully."
 
 
 # deploy the lambdas
-aws lambda update-function-code --function-name ConnectLambda --image-uri "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/connect-lambda-repo:latest"
+aws lambda update-function-code --region $REGION --function-name ConnectLambda --image-uri "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/connect-lambda-repo:latest"
 
-aws lambda update-function-code --function-name DisconnectLambda --image-uri "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/disconnect-lambda-repo:latest"
+aws lambda update-function-code --region $REGION --function-name DisconnectLambda --image-uri "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/disconnect-lambda-repo:latest"
 
-aws lambda update-function-code --function-name DefaultLambda --image-uri "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/default-lambda-repo:latest"
+aws lambda update-function-code --region $REGION --function-name DefaultLambda --image-uri "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/default-lambda-repo:latest"
+
+aws lambda update-function-code --region $REGION --function-name CreateVoiceLambda --image-uri "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/create-voice-lambda-repo:latest"

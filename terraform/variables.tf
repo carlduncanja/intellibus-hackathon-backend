@@ -9,8 +9,8 @@ variable "region" {
   default     = "us-west-2"
 }
 
-variable "openai_api_key" {
-  description = "OpenAI API key"
+variable "elevenlabs_api_key" {
+  description = "API key for Eleven Labs"
 }
 
 variable "secret_username" {

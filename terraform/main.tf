@@ -205,16 +205,10 @@ resource "aws_lambda_function" "default_lambda" {
   role          = aws_iam_role.lambda_execution_role.arn
   tags          = var.tags
 
-  # Attach the custom Lambda layer using the variable (if still needed; note that layers are not supported for image packages)
-  # If you need the layer functionality, you might need to incorporate it into your container image.
-  # layers = [
-  #   var.openai_layer_arn
-  # ]
-
   environment {
     variables = {
       WEBSOCKET_URL         = "https://${aws_apigatewayv2_api.websocket_api.id}.execute-api.${var.region}.amazonaws.com/${aws_apigatewayv2_stage.websocket_stage.name}"
-      BASIC_AUTH_SECRET_ARN = aws_secretsmanager_secret.intellibus_hackathon_2.arn
+      ELEVENLABS_API_KEY    = var.elevenlabs_api_key
     }
   }
 }
